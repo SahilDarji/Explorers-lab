@@ -1,9 +1,9 @@
 /* Sidebar styles */
 .sidebar {
-    width: 250px;
-    transform: translateX(-250px);
+    width: 280px;
     transition: transform 0.3s ease-in-out;
-    z-index: 1000;
+    transform: translateX(-100%);
+    z-index: 40; /* Ensure sidebar is on top */
 }
 
 .sidebar.open {
@@ -11,15 +11,30 @@
 }
 
 .overlay {
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    z-index: 999;
+    display: none;
+    z-index: 30; /* Below sidebar, above content */
 }
 
 .overlay.open {
-    visibility: visible;
-    opacity: 1;
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+    #openSidebarBtn {
+        display: none;
+    }
+    #closeSidebarBtn {
+        display: none;
+    }
+    .overlay {
+        display: none !important; /* Ensure overlay is never shown on desktop */
+    }
+    main {
+        margin-left: 280px;
+    }
 }
 
 /* Button effects */

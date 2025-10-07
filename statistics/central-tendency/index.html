@@ -40,8 +40,9 @@
         }
         /* Adaptive column width styling */
         .adaptive-table th, .adaptive-table td {
-            min-width: 150px; /* Starting width for columns */
+            min-width: 120px; /* Reduced min-width for better mobile display */
             width: auto;
+            white-space: nowrap; /* Prevent text wrapping in headers */
         }
         /* Styling for the quantile input forms */
         .quantile-input-form input {
@@ -84,8 +85,8 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <div class="bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Measure of Central Tendency Calculator</h2>
             
             <!-- Data Type Selection -->
@@ -154,6 +155,7 @@
                                 <tr>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Observations (x)</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden cf-header">c.f.</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fx-header">fx</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden deviation-header">d = x - A</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden step-deviation-header">u = d / c</th>
@@ -171,6 +173,7 @@
                                 <tr class="font-semibold">
                                     <td class="px-4 py-3">Total</td>
                                     <td id="discrete-f-total" class="px-4 py-3"></td>
+                                    <td class="px-4 py-3 hidden cf-total-cell"></td>
                                     <td id="discrete-fx-total" class="px-4 py-3 hidden fx-total-cell"></td>
                                     <td class="px-4 py-3 hidden d-total-cell"></td> <!-- d total is not needed -->
                                     <td class="px-4 py-3 hidden u-total-cell"></td> <!-- u total is not needed -->
@@ -191,6 +194,7 @@
                                 <tr>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden cf-header">c.f.</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden mid-value-header">Mid-Value (x)</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fx-header-cont">fx</th>
                                     <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden deviation-header">d = x - A</th>
@@ -209,6 +213,7 @@
                                 <tr class="font-semibold">
                                     <td class="px-4 py-3" colspan="1">Total</td>
                                     <td id="continuous-f-total" class="px-4 py-3"></td>
+                                    <td class="px-4 py-3 hidden cf-total-cell"></td>
                                     <td class="px-4 py-3 hidden mid-value-total-cell"></td> <!-- Empty cell for mid-value column -->
                                     <td id="continuous-fx-total" class="px-4 py-3 hidden fx-total-cell"></td>
                                     <td class="px-4 py-3 hidden d-total-cell"></td> <!-- d total -->
@@ -284,7 +289,7 @@
         </div>
 
         <!-- Calculation Section -->
-        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+        <div class="bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100 mt-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Calculations</h2>
             
             <!-- Common Measures -->
@@ -292,10 +297,10 @@
                 <button id="toggleMeanSectionBtn" class="btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
                     Calculate Mean
                 </button>
-                <button id="calculateMedianBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                <button id="calculateMedianBtn" class="btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
                     Calculate Median
                 </button>
-                <button id="calculateModeBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                <button id="calculateModeBtn" class="btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
                     Calculate Mode
                 </button>
             </div>
@@ -375,7 +380,7 @@
         </div>
 
         <!-- Grouping Method Tables -->
-        <div id="grouping-method-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+        <div id="grouping-method-container" class="hidden bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100 mt-8">
             <h3 class="text-lg font-medium text-gray-800 mb-2">Grouping Method for Mode</h3>
             
             <!-- Grouping Table -->
@@ -400,7 +405,7 @@
         </div>
 
         <!-- Converted Frequency Distribution Table -->
-        <div id="converted-cf-table-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+        <div id="converted-cf-table-container" class="hidden bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100 mt-8">
             <h3 class="text-lg font-medium text-gray-800 mb-2">Converted Frequency Distribution</h3>
             <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
                 <table id="converted-cf-table" class="divide-y divide-gray-200 adaptive-table">
@@ -408,6 +413,7 @@
                         <tr>
                             <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
                             <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                            <th id="converted-cf-cf-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden">c.f.</th>
                             <th id="converted-cf-mid-value-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Mid-Value (x)</th>
                             <th id="converted-cf-fx-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">fx</th>
                         </tr>
@@ -419,6 +425,7 @@
                         <tr class="font-semibold">
                             <td class="px-4 py-3">Total</td>
                             <td id="converted-cf-f-total" class="px-4 py-3"></td>
+                            <td id="converted-cf-cf-total" class="px-4 py-3 hidden"></td>
                             <td id="converted-cf-mid-value-total" class="px-4 py-3"></td>
                             <td id="converted-cf-fx-total" class="px-4 py-3"></td>
                         </tr>
@@ -428,7 +435,7 @@
         </div>
 
         <!-- Results Section -->
-        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+        <div class="bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100 mt-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Results</h2>
             <div id="results-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <!-- Results will be dynamically inserted here -->
@@ -437,7 +444,7 @@
         </div>
 
         <!-- Step-by-step Solution Section -->
-        <div id="step-by-step-solution-container" class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8 hidden">
+        <div id="step-by-step-solution-container" class="bg-white rounded-xl shadow p-4 sm:p-6 border border-gray-100 mt-8 hidden">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Step-by-step Solution</h2>
             <div id="solution-steps" class="prose max-w-none">
                 <!-- Step-by-step solution will be dynamically inserted here -->
