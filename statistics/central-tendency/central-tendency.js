@@ -1800,16 +1800,16 @@ class CentralTendencyCalculator {
 
     calculateMedian() {
         // Future implementation will clear other calculation displays
-        this.resetDiscreteTable();
-        this.resetContinuousTable();
         switch (this.dataType) {
             case 'ungrouped':
                 this.calculateUngroupedMedian();
                 break;
             case 'discrete':
+                this.resetDiscreteTable();
                 this.calculateDiscreteMedian();
                 break;
             case 'continuous':
+                this.resetContinuousTable();
                 this.calculateContinuousMedian();
                 break;
             case 'more-than-less-than':
@@ -1953,6 +1953,7 @@ class CentralTendencyCalculator {
     }
 
     calculateUngroupedMedian() {
+        this.resetUngroupedTable();
         const data = this.getUngroupedData();
         if (data.length === 0) {
             alert('Please enter some data.');
@@ -2559,6 +2560,38 @@ class CentralTendencyCalculator {
             <div class="overflow-x-auto"><p>$$ ${quantileName} = ${l} + \\frac{${pos} - ${cf}}{${f}} \\times ${c} = ${value.toFixed(4)} $$</p></div>
             <p><strong>The ${quantileName} for the given data is ${value.toFixed(4)}.</strong></p>
         `;
+    }
+
+    displayUngroupedMedianSolution(sortedData, n, pos, median, options = {}) {
+        let solution = `
+            <h3 class="font-semibold text-lg">Calculating the Median for Ungrouped Data</h3>
+            <p><strong>1. Arrange the data in ascending order:</strong></p>
+            <p>${sortedData.join(', ')}</p>
+            <p><strong>2. Find the position of the median:</strong></p>
+            <p>The total number of observations (n) is ${n}.</p>
+            <div class="overflow-x-auto"><p>$$ \\text{Position} = \\left( \\frac{n+1}{2} \\right)^{\\text{th}} \\text{ observation} $$</p></div>
+            <div class="overflow-x-auto"><p>$$ \\text{Position} = \\left( \\frac{${n}+1}{2} \\right)^{\\text{th}} = ${pos}^{\\text{th}} \\text{ observation} $$</p></div>
+        `;
+
+        if (options.isInterpolated) {
+            solution += `
+                <p><strong>3. Calculate the median value:</strong></p>
+                <p>Since the position is ${pos}, we need to interpolate.</p>
+                <p>The cumulative frequency up to the ${Math.floor(pos)}<sup>th</sup> observation is ${options.lowerCf}, corresponding to an x-value of ${options.lowerValue}.</p>
+                <p>The next observation corresponds to an x-value of ${options.upperValue}.</p>
+                <div class="overflow-x-auto"><p>$$ M = (\\text{value of } ${Math.floor(pos)}^{\\text{th}} \\text{ obs}) + ${options.fraction} \\times ((\\text{value of next obs}) - (\\text{value of } ${Math.floor(pos)}^{\\text{th}} \\text{ obs})) $$</p></div>
+                <div class="overflow-x-auto"><p>$$ M = ${options.lowerValue} + ${options.fraction} \\times (${options.upperValue} - ${options.lowerValue}) = ${median.toFixed(4)} $$</p></div>
+            `;
+        } else {
+            solution += `
+                <p><strong>3. Find the median value:</strong></p>
+                <p>We look for the cumulative frequency which is just greater than or equal to ${pos}.</p>
+                <p>The c.f. value is ${options.cf}, and the corresponding value of x is <strong>${options.x}</strong>.</p>
+            `;
+        }
+
+        solution += `<p><strong>The median for the given data is ${median.toFixed(4)}.</strong></p>`;
+        return solution;
     }
 }
 
