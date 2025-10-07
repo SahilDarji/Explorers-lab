@@ -6,7 +6,7 @@ import {
     getCorrelationInterpretation,
     formatNumber,
     validateInputs
-} from '../../../shared/js/utils.js';
+} from '../../shared/js/utils.js';
 
 export class CorrelationCalculator {
     constructor() {
