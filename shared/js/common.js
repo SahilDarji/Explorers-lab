@@ -16,41 +16,45 @@ const navigationData = [
 
 console.log('📊 Navigation data loaded:', navigationData.length, 'items');
 
+function getBasePath() {
+    const isGitHub = window.location.hostname.includes('github.io');
+    if (isGitHub) {
+        // Pathname on GitHub Pages is /<repo-name>/path/to/page.html
+        const pathParts = window.location.pathname.split('/').filter(p => p);
+        if (pathParts.length > 0) {
+            return `/${pathParts[0]}`;
+        }
+    }
+    // For local development, assume serving from the root
+    return '';
+}
+
 // Get current page path for highlighting (simplified)
 function getCurrentPagePath() {
     const path = window.location.pathname;
-    console.log('📍 Current page path:', path);
     return path;
 }
 
 // Render sidebar navigation (simplified)
 function renderSidebar() {
-    console.log('🎨 Starting to render sidebar...');
-    
     const sidebar = document.getElementById('sidebar');
     if (!sidebar) {
-        console.error('❌ Sidebar element not found!');
         return;
     }
     
     const navElement = sidebar.querySelector('nav');
     if (!navElement) {
-        console.error('❌ Nav element not found in sidebar!');
         return;
     }
-    
-    console.log('✅ Found sidebar and nav elements');
     
     // Clear existing content
     navElement.innerHTML = '';
     
     const currentPath = getCurrentPagePath();
+    const basePath = getBasePath();
     let currentUl = null;
-    let itemCount = 0;
     
     navigationData.forEach(item => {
-        console.log('🔧 Processing item:', item.text);
-        
         if (item.isHeader) {
             // Create header
             const headerDiv = document.createElement('div');
@@ -62,23 +66,22 @@ function renderSidebar() {
             currentUl = document.createElement('ul');
             currentUl.className = 'space-y-2 pl-4';
             headerDiv.appendChild(currentUl);
-            
-            console.log('📂 Created header:', item.text);
         } else {
             // Create navigation link
             const listItem = document.createElement('li');
             const link = document.createElement('a');
             
-            // Use root-relative href directly - no complex path calculation needed!
-            link.href = item.href;
+            // Construct the correct absolute path
+            const targetPath = `${basePath}/${item.href}`;
+            link.href = targetPath;
             link.id = item.id;
             link.textContent = item.text;
             
             // Check if this is the active page
-            const isActive = (currentPath === item.href || currentPath.endsWith(item.href));
+            // Handle index.html being served as the root path '/'
+            const isActive = (currentPath === targetPath) || (currentPath === `${basePath}/` && item.href === 'index.html');
             if (isActive) {
                 link.className = 'block text-lg font-bold text-blue-600 hover:text-blue-600 transition-colors duration-200';
-                console.log('🎯 Active link:', item.text);
             } else {
                 link.className = 'block text-lg font-medium text-gray-700 hover:text-blue-600 transition-colors duration-200';
             }
@@ -91,72 +94,48 @@ function renderSidebar() {
             } else {
                 navElement.appendChild(listItem);
             }
-            
-            itemCount++;
-            console.log('🔗 Added link:', item.text, '->', link.href);
         }
     });
-    
-    console.log('✅ Sidebar rendered successfully! Added', itemCount, 'navigation links');
 }
 
 // Setup sidebar toggle functionality
 function setupSidebar() {
-    console.log('⚙️ Setting up sidebar functionality...');
-    
     const openSidebarBtn = document.getElementById('openSidebarBtn');
     const closeSidebarBtn = document.getElementById('closeSidebarBtn');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
 
-    console.log('🔍 Elements found:', {
-        openBtn: !!openSidebarBtn,
-        closeBtn: !!closeSidebarBtn,
-        sidebar: !!sidebar,
-        overlay: !!overlay
-    });
-    
     if (openSidebarBtn && sidebar && overlay) {
         openSidebarBtn.addEventListener('click', function() {
-            console.log('👆 Opening sidebar');
             sidebar.classList.add('open');
             overlay.classList.add('open');
         });
-        console.log('✅ Open sidebar event listener added');
     }
 
     if (closeSidebarBtn && sidebar && overlay) {
         closeSidebarBtn.addEventListener('click', function() {
-            console.log('👆 Closing sidebar');
             sidebar.classList.remove('open');
             overlay.classList.remove('open');
         });
-        console.log('✅ Close sidebar event listener added');
     }
 
     if (overlay && sidebar) {
         overlay.addEventListener('click', function() {
-            console.log('👆 Closing sidebar via overlay click');
             sidebar.classList.remove('open');
             overlay.classList.remove('open');
         });
-        console.log('✅ Overlay click event listener added');
     }
     
     // Render the navigation
     renderSidebar();
-    
-    console.log('🎉 Sidebar setup complete!');
 }
 
 // Initialize when DOM is loaded
 if (document.readyState === 'loading') {
-document.addEventListener('DOMContentLoaded', setupSidebar);
-    console.log('📅 DOMContentLoaded listener added');
+    document.addEventListener('DOMContentLoaded', setupSidebar);
 } else {
     // DOM is already loaded
     setupSidebar();
-    console.log('📅 DOM already loaded, running setup immediately');
 }
 
 console.log('🎯 Common.js loaded successfully!');

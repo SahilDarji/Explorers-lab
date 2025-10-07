@@ -4,7 +4,7 @@ import {
     calculateCorrelationCovariance,
     formatNumber,
     getCorrelationInterpretation
-} from '../../../shared/js/utils.js';
+} from '../../shared/js/utils.js';
 
 // Define the structure of all possible formulas and their requirements
 const ALL_FORMULAS = [
