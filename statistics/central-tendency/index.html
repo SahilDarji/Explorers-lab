@@ -283,42 +283,38 @@
             </div>
         </div>
 
-        <!-- Converted Frequency Distribution Table -->
-        <div id="converted-cf-table-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
-            <h3 class="text-lg font-medium text-gray-800 mb-2">Converted Frequency Distribution</h3>
-            <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
-                <table id="converted-cf-table" class="divide-y divide-gray-200 adaptive-table">
-                    <thead>
-                        <tr>
-                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
-                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
-                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Mid-Value (x)</th>
-                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">fx</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="converted-cf-table-body">
-                        <!-- Data will be populated here -->
-                    </tbody>
-                    <tfoot id="converted-cf-table-foot" class="bg-gray-50">
-                        <tr class="font-semibold">
-                            <td class="px-4 py-3">Total</td>
-                            <td id="converted-cf-f-total" class="px-4 py-3"></td>
-                            <td class="px-4 py-3"></td>
-                            <td id="converted-cf-fx-total" class="px-4 py-3"></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </div>
-
         <!-- Calculation Section -->
         <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Calculations</h2>
             
-            <!-- Mean Calculation Method -->
-            <div class="mb-6">
+            <!-- Common Measures -->
+            <div class="flex flex-wrap gap-3 mt-6">
+                <button id="toggleMeanSectionBtn" class="btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Calculate Mean
+                </button>
+                <button id="calculateMedianBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Calculate Median
+                </button>
+                <button id="calculateModeBtn" class="btn bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Calculate Mode
+                </button>
+            </div>
+
+            <!-- Mean Calculation Section (Initially Hidden) -->
+            <div id="mean-calculation-section" class="hidden mt-6 p-4 bg-gray-50 rounded-lg border">
+                <!-- Assumed Mean and Class Interval Inputs -->
+                <div id="mean-assumptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
+                    <div id="assumed-mean-container" class="hidden">
+                        <label for="assumedMean" class="block text-sm font-medium text-gray-700">Assumed Mean (A)</label>
+                        <input type="number" id="assumedMean" placeholder="Enter A" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div id="class-interval-container" class="hidden">
+                        <label for="classInterval" class="block text-sm font-medium text-gray-700">Class Interval (c)</label>
+                        <input type="number" id="classInterval" placeholder="Enter c" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
                 <h3 class="text-lg font-medium text-gray-800 mb-2">Mean Calculation Method</h3>
-                <div id="meanMethodSelector" class="flex flex-wrap gap-x-4 gap-y-2">
+                <div id="meanMethodSelector" class="flex flex-wrap gap-x-4 gap-y-2 mb-4">
                     <label class="flex items-center">
                         <input type="radio" name="meanMethod" value="direct" class="form-radio" checked>
                         <span class="ml-2">Direct Method</span>
@@ -332,25 +328,9 @@
                         <span class="ml-2">Step Deviation Method</span>
                     </label>
                 </div>
-            </div>
-
-            <!-- Assumed Mean and Class Interval Inputs -->
-            <div id="mean-assumptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div id="assumed-mean-container" class="hidden">
-                    <label for="assumedMean" class="block text-sm font-medium text-gray-700">Assumed Mean (A)</label>
-                    <input type="number" id="assumedMean" placeholder="Enter A" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div id="class-interval-container" class="hidden">
-                    <label for="classInterval" class="block text-sm font-medium text-gray-700">Class Interval (c)</label>
-                    <input type="number" id="classInterval" placeholder="Enter c" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-            </div>
-
-            <!-- Common Measures -->
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <button id="calculateMeanBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Mean</button>
-                <button id="calculateMedianBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Median</button>
-                <button id="calculateModeBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Mode</button>
+                <button id="calculateMeanBtn" class="btn bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
+                    Calculate
+                </button>
             </div>
 
             <!-- Quantile Calculation Area -->
@@ -391,6 +371,59 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Grouping Method Tables -->
+        <div id="grouping-method-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Grouping Method for Mode</h3>
+            
+            <!-- Grouping Table -->
+            <div id="grouping-table-container">
+                <h4 class="font-semibold mb-2">Grouping Table</h4>
+                <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                    <table id="grouping-table" class="divide-y divide-gray-200 adaptive-table">
+                        <!-- Headers and body will be populated by JS -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- Analysis Table -->
+            <div id="analysis-table-container">
+                <h4 class="font-semibold mb-2">Analysis Table</h4>
+                <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                    <table id="analysis-table" class="divide-y divide-gray-200 adaptive-table">
+                        <!-- Headers and body will be populated by JS -->
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Converted Frequency Distribution Table -->
+        <div id="converted-cf-table-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Converted Frequency Distribution</h3>
+            <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                <table id="converted-cf-table" class="divide-y divide-gray-200 adaptive-table">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                            <th id="converted-cf-mid-value-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Mid-Value (x)</th>
+                            <th id="converted-cf-fx-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">fx</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="converted-cf-table-body">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                    <tfoot id="converted-cf-table-foot" class="bg-gray-50">
+                        <tr class="font-semibold">
+                            <td class="px-4 py-3">Total</td>
+                            <td id="converted-cf-f-total" class="px-4 py-3"></td>
+                            <td id="converted-cf-mid-value-total" class="px-4 py-3"></td>
+                            <td id="converted-cf-fx-total" class="px-4 py-3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
 

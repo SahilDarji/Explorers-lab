@@ -88,6 +88,21 @@ class CentralTendencyCalculator {
         if (calculateMeanBtn) {
             calculateMeanBtn.addEventListener('click', () => this.calculateMean());
         }
+
+        const calculateModeBtn = document.getElementById('calculateModeBtn');
+        if (calculateModeBtn) {
+            calculateModeBtn.addEventListener('click', () => this.calculateMode());
+        }
+
+        const toggleMeanSectionBtn = document.getElementById('toggleMeanSectionBtn');
+        if (toggleMeanSectionBtn) {
+            toggleMeanSectionBtn.addEventListener('click', () => this.toggleMeanSection());
+        }
+    }
+
+    toggleMeanSection() {
+        const meanSection = document.getElementById('mean-calculation-section');
+        meanSection.classList.toggle('hidden');
     }
 
     initializeInputWidths() {
@@ -155,18 +170,21 @@ class CentralTendencyCalculator {
     }
 
     updateMeanMethodUI() {
+        const meanAssumptions = document.getElementById('mean-assumptions');
         const assumedMeanContainer = document.getElementById('assumed-mean-container');
         const classIntervalContainer = document.getElementById('class-interval-container');
 
-        if (this.meanMethod === 'shortcut') {
-            assumedMeanContainer.classList.remove('hidden');
-            classIntervalContainer.classList.add('hidden');
-        } else if (this.meanMethod === 'step-deviation') {
-            assumedMeanContainer.classList.remove('hidden');
-            classIntervalContainer.classList.remove('hidden');
+        if (this.meanMethod === 'direct') {
+            meanAssumptions.classList.add('hidden');
         } else {
-            assumedMeanContainer.classList.add('hidden');
-            classIntervalContainer.classList.add('hidden');
+            meanAssumptions.classList.remove('hidden');
+            if (this.meanMethod === 'shortcut') {
+                assumedMeanContainer.classList.remove('hidden');
+                classIntervalContainer.classList.add('hidden');
+            } else if (this.meanMethod === 'step-deviation') {
+                assumedMeanContainer.classList.remove('hidden');
+                classIntervalContainer.classList.remove('hidden');
+            }
         }
     }
 
@@ -273,6 +291,547 @@ class CentralTendencyCalculator {
         }
     }
 
+    calculateMode() {
+        if (this.dataType !== 'more-than-less-than' && this.dataType !== 'mid-value') {
+            const convertedCfTableContainer = document.getElementById('converted-cf-table-container');
+            if (convertedCfTableContainer) {
+                convertedCfTableContainer.classList.add('hidden');
+            }
+        }
+        switch (this.dataType) {
+            case 'ungrouped':
+                this.calculateUngroupedMode();
+                break;
+            case 'discrete':
+                this.calculateDiscreteMode();
+                break;
+            case 'continuous':
+                this.calculateContinuousMode();
+                break;
+            case 'more-than-less-than':
+                this.calculateMoreThanLessThanMode();
+                break;
+            case 'mid-value':
+                this.calculateMidValueMode();
+                break;
+        }
+    }
+
+    calculateContinuousMode() {
+        const data = this.getContinuousData();
+        if (data.length === 0) return alert('Please enter some data.');
+        this._calculateModeFromContinuousData(data);
+    }
+
+    calculateMoreThanLessThanMode() {
+        const data = this.getMoreThanLessThanData();
+        if (data.length < 2) {
+            alert('Please enter at least two rows of data for conversion.');
+            return;
+        }
+        const convertedData = this.convertCfToFrequencyDistribution(data, this.moreThanLessThanType);
+        
+        this.populateConvertedCfTable(convertedData, null, null, { showFx: false });
+        this._calculateModeFromContinuousData(convertedData);
+    }
+
+    calculateMidValueMode() {
+        const data = this.getMidValueData().sort((a, b) => a.x - b.x);
+        if (data.length < 2) {
+            alert('Please enter at least two rows to determine the class interval.');
+            return;
+        }
+
+        const h = data[1].x - data[0].x; // class width
+        const convertedData = data.map(item => ({
+            lower: item.x - h / 2,
+            upper: item.x + h / 2,
+            f: item.f,
+        }));
+
+        this.populateConvertedCfTable(convertedData, null, null, { showFx: false });
+        this._calculateModeFromContinuousData(convertedData);
+    }
+
+    calculateContinuousModeByGrouping(data, reason = '') {
+        const frequencies = data.map(d => d.f);
+        const groupingColumns = [];
+
+        // Column 2: Sums of 2s from the start
+        const col2 = [];
+        for (let i = 0; i < frequencies.length - 1; i += 2) {
+            col2.push({ sum: frequencies[i] + frequencies[i + 1], indices: [i, i + 1] });
+        }
+        groupingColumns.push(col2);
+
+        // Column 3: Sums of 2s, leaving the first
+        const col3 = [];
+        for (let i = 1; i < frequencies.length - 1; i += 2) {
+            col3.push({ sum: frequencies[i] + frequencies[i + 1], indices: [i, i + 1] });
+        }
+        groupingColumns.push(col3);
+
+        // Column 4: Sums of 3s from the start
+        const col4 = [];
+        for (let i = 0; i < frequencies.length - 2; i += 3) {
+            col4.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col4);
+
+        // Column 5: Sums of 3s, leaving the first
+        const col5 = [];
+        for (let i = 1; i < frequencies.length - 2; i += 3) {
+            col5.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col5);
+
+        // Column 6: Sums of 3s, leaving the first two
+        const col6 = [];
+        for (let i = 2; i < frequencies.length - 2; i += 3) {
+            col6.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col6);
+        
+        const analysisCounts = data.reduce((acc, item) => {
+            const key = `${item.lower}-${item.upper}`;
+            return { ...acc, [key]: 0 };
+        }, {});
+
+        const analysisTableRows = [];
+
+        const allColumns = [data.map(d => d.f), ...groupingColumns];
+
+        allColumns.forEach((column, colIndex) => {
+            const analysisRow = data.reduce((acc, item) => {
+                const key = `${item.lower}-${item.upper}`;
+                return { ...acc, [key]: { ticked: false, sourceGroups: [] } };
+            }, {});
+
+            if (colIndex === 0) { 
+                if (column.length > 0) {
+                    const maxFreq = Math.max(...column);
+                    column.forEach((freq, index) => {
+                        if (freq === maxFreq) {
+                            if(data[index]) {
+                                const key = `${data[index].lower}-${data[index].upper}`;
+                                analysisCounts[key]++;
+                                analysisRow[key].ticked = true;
+                                analysisRow[key].sourceGroups.push([index]);
+                            }
+                        }
+                    });
+                }
+            } else { 
+                if (column.length > 0) {
+                    const maxSum = Math.max(...column.map(item => item.sum));
+                    const maxItems = column.filter(item => item.sum === maxSum);
+
+                    maxItems.forEach(group => {
+                        group.indices.forEach(dataIndex => {
+                            if (data[dataIndex]) {
+                                const key = `${data[dataIndex].lower}-${data[dataIndex].upper}`;
+                                analysisCounts[key]++;
+                                analysisRow[key].ticked = true;
+                                if (!analysisRow[key].sourceGroups.some(g => JSON.stringify(g) === JSON.stringify(group.indices))) {
+                                    analysisRow[key].sourceGroups.push(group.indices);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+            analysisTableRows.push(analysisRow);
+        });
+
+        const maxCount = Math.max(...Object.values(analysisCounts));
+        const modalClassStrings = Object.keys(analysisCounts).filter(key => analysisCounts[key] === maxCount);
+
+        const modalClassString = modalClassStrings[0];
+        const modalClass = data.find(item => `${item.lower}-${item.upper}` === modalClassString);
+        const modalClassIndex = data.indexOf(modalClass);
+
+        const l = modalClass.lower;
+        const fm = modalClass.f;
+        const f1 = modalClassIndex > 0 ? data[modalClassIndex - 1].f : 0;
+        const f2 = modalClassIndex < data.length - 1 ? data[modalClassIndex + 1].f : 0;
+        const c = modalClass.upper - modalClass.lower;
+
+        if ((2 * fm - f1 - f2) === 0) {
+            this.displayResults({ Mode: 'Cannot be calculated' });
+            this.displayModeSolution('The denominator in the mode formula is zero for the identified modal class.');
+            return;
+        }
+
+        const mode = l + ((fm - f1) / (2 * fm - f1 - f2)) * c;
+
+        this.displayResults({ Mode: mode.toFixed(4) });
+        this.populateGroupingTableUI(data, groupingColumns, true);
+        this.populateAnalysisTableUI(data, analysisTableRows, analysisCounts, true);
+        this.displayContinuousModeSolution(l, fm, f1, f2, c, mode, true, reason);
+    }
+
+    _calculateModeFromContinuousData(data) {
+        if (data.length === 0) return alert('Please enter some data.');
+        document.getElementById('grouping-method-container').classList.add('hidden');
+
+        let isUniform = true;
+        if (data.length > 1) {
+            const firstWidth = data[0].upper - data[0].lower;
+            for (let i = 1; i < data.length; i++) {
+                if ((data[i].upper - data[i].lower) !== firstWidth) {
+                    isUniform = false;
+                    break;
+                }
+            }
+        }
+
+        const maxFrequency = Math.max(...data.map(item => item.f));
+        const modalClasses = data.filter(item => item.f === maxFrequency);
+
+        if (modalClasses.length === 1 && isUniform) {
+            const modalClass = modalClasses[0];
+            const modalClassIndex = data.indexOf(modalClass);
+
+            const l = modalClass.lower;
+            const fm = modalClass.f;
+            const f1 = modalClassIndex > 0 ? data[modalClassIndex - 1].f : 0;
+            const f2 = modalClassIndex < data.length - 1 ? data[modalClassIndex + 1].f : 0;
+            const c = modalClass.upper - modalClass.lower;
+
+            if ((2 * fm - f1 - f2) === 0) {
+                this.displayResults({ Mode: 'Cannot be calculated' });
+                this.displayModeSolution('The denominator in the mode formula is zero, so the mode cannot be calculated.');
+                return;
+            }
+
+            const mode = l + ((fm - f1) / (2 * fm - f1 - f2)) * c;
+
+            this.displayResults({ Mode: mode.toFixed(4) });
+            this.displayContinuousModeSolution(l, fm, f1, f2, c, mode, false);
+        } else {
+            let reason = '';
+            if (!isUniform) {
+                reason = 'the class intervals are unequal';
+            }
+            if (modalClasses.length > 1) {
+                reason += (reason ? ' and ' : '') + 'there is a tie for the highest frequency';
+            }
+            this.calculateContinuousModeByGrouping(data, reason);
+        }
+    }
+
+    calculateUngroupedMode() {
+        const data = this.getUngroupedData();
+        if (data.length === 0) return alert('Please enter some data.');
+
+        const frequencyMap = data.reduce((acc, val) => {
+            acc[val] = (acc[val] || 0) + 1;
+            return acc;
+        }, {});
+
+        let maxFrequency = 0;
+        for (const val in frequencyMap) {
+            if (frequencyMap[val] > maxFrequency) {
+                maxFrequency = frequencyMap[val];
+            }
+        }
+
+        if (maxFrequency === 1) {
+            this.displayResults({ Mode: 'No mode' });
+            this.displayModeSolution('No mode found (all values appear only once).');
+            return;
+        }
+
+        const modes = Object.keys(frequencyMap).filter(val => frequencyMap[val] === maxFrequency);
+        this.displayResults({ Mode: modes.join(', ') });
+        this.displayModeSolution(`The value(s) appearing most frequently (${maxFrequency} times) is/are: ${modes.join(', ')}.`);
+    }
+
+    calculateDiscreteMode() {
+        const data = this.getDiscreteData();
+        if (data.length === 0) return alert('Please enter some data.');
+
+        // Hide grouping table container initially
+        document.getElementById('grouping-method-container').classList.add('hidden');
+
+        let maxFrequency = 0;
+        data.forEach(item => {
+            if (item.f > maxFrequency) {
+                maxFrequency = item.f;
+            }
+        });
+
+        const modes = data.filter(item => item.f === maxFrequency).map(item => item.x);
+
+        if (modes.length === 1) {
+            this.displayResults({ Mode: modes.join(', ') });
+            this.displayModeSolution(`The x value with the highest frequency (${maxFrequency}) is: ${modes.join(', ')}.`);
+        } else {
+            // Use grouping method if there's a tie for the highest frequency
+            this.calculateModeByGrouping(data);
+        }
+    }
+
+    calculateModeByGrouping(data) {
+        const frequencies = data.map(d => d.f);
+        const groupingColumns = [];
+
+        // Column 1 is just the original frequencies, handled separately.
+        
+        // Column 2: Sums of 2s from the start
+        const col2 = [];
+        for (let i = 0; i < frequencies.length - 1; i += 2) {
+            col2.push({ sum: frequencies[i] + frequencies[i + 1], indices: [i, i + 1] });
+        }
+        groupingColumns.push(col2);
+
+        // Column 3: Sums of 2s, leaving the first
+        const col3 = [];
+        for (let i = 1; i < frequencies.length - 1; i += 2) {
+            col3.push({ sum: frequencies[i] + frequencies[i + 1], indices: [i, i + 1] });
+        }
+        groupingColumns.push(col3);
+
+        // Column 4: Sums of 3s from the start
+        const col4 = [];
+        for (let i = 0; i < frequencies.length - 2; i += 3) {
+            col4.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col4);
+
+        // Column 5: Sums of 3s, leaving the first
+        const col5 = [];
+        for (let i = 1; i < frequencies.length - 2; i += 3) {
+            col5.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col5);
+
+        // Column 6: Sums of 3s, leaving the first two
+        const col6 = [];
+        for (let i = 2; i < frequencies.length - 2; i += 3) {
+            col6.push({ sum: frequencies[i] + frequencies[i + 1] + frequencies[i + 2], indices: [i, i + 1, i + 2] });
+        }
+        groupingColumns.push(col6);
+        
+        // Analysis Table
+        const analysisCounts = data.reduce((acc, item) => ({ ...acc, [item.x]: 0 }), {});
+        const analysisTableRows = [];
+
+        const allColumns = [frequencies, ...groupingColumns];
+
+        allColumns.forEach((column, colIndex) => {
+            const analysisRow = data.reduce((acc, item) => ({ ...acc, [item.x]: { ticked: false, sourceGroups: [] } }), {});
+            let values;
+            if (colIndex === 0) { // Handling original frequencies (Column I)
+                if (column.length > 0) {
+                    const maxFreq = Math.max(...column);
+                    column.forEach((freq, index) => {
+                        if (freq === maxFreq) {
+                            if(data[index]) {
+                                const x = data[index].x;
+                                analysisCounts[x]++;
+                                analysisRow[x].ticked = true;
+                                analysisRow[x].sourceGroups.push([index]);
+                            }
+                        }
+                    });
+                }
+            } else { // Handling grouped columns (II-VI)
+                values = column;
+                if (values.length > 0) {
+                    const maxSum = Math.max(...values.map(item => item.sum));
+                    const maxItems = values.filter(item => item.sum === maxSum);
+
+                    maxItems.forEach(group => {
+                        group.indices.forEach(dataIndex => {
+                            if (data[dataIndex]) {
+                                const x = data[dataIndex].x;
+                                analysisCounts[x]++;
+                                analysisRow[x].ticked = true;
+                                if (!analysisRow[x].sourceGroups.some(g => JSON.stringify(g) === JSON.stringify(group.indices))) {
+                                    analysisRow[x].sourceGroups.push(group.indices);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+            analysisTableRows.push(analysisRow);
+        });
+
+        const maxCount = Math.max(...Object.values(analysisCounts));
+        const modes = Object.keys(analysisCounts).filter(x => analysisCounts[x] === maxCount);
+
+        this.displayResults({ Mode: modes.join(', ') });
+        this.populateGroupingTableUI(data, groupingColumns, false);
+        this.populateAnalysisTableUI(data, analysisTableRows, analysisCounts, false);
+        this.displayModeSolution(`After applying the grouping method, the mode(s) is/are: ${modes.join(', ')}.`);
+    }
+
+    addAnalysisTableInteractivity(data, analysisTableRows, isContinuous = false) {
+        const tickCells = document.querySelectorAll('.analysis-tick-cell');
+    
+        tickCells.forEach(cell => {
+            if (cell.innerText !== '✓') return;
+    
+            const colIndex = parseInt(cell.dataset.colIndex, 10);
+            const xValue = cell.dataset.xValue;
+            const sourceGroups = analysisTableRows[colIndex][xValue].sourceGroups;
+    
+            const highlight = (doAdd, isClick = false) => {
+                sourceGroups.forEach(indices => {
+                    const highlightClass = isClick ? 'bg-blue-300' : 'bg-blue-200';
+    
+                    indices.forEach(idx => {
+                        const xCellId = isContinuous ? `group-class-${idx}` : `group-x-${idx}`;
+                        document.getElementById(xCellId)?.classList.toggle(highlightClass, doAdd);
+                        document.getElementById(`group-f-${idx}`)?.classList.toggle(highlightClass, doAdd);
+                    });
+    
+                    if (indices.length > 1) {
+                        const indicesStr = indices.join(',');
+                        document.querySelector(`.group-sum-cell[data-indices="${indicesStr}"]`)?.classList.toggle(isClick ? 'bg-yellow-300' : 'bg-yellow-200', doAdd);
+                    }
+                });
+            };
+    
+            let isClicked = false;
+            cell.addEventListener('click', () => {
+                isClicked = !isClicked;
+                highlight(isClicked, true);
+            });
+    
+            cell.addEventListener('mouseover', () => {
+                if (!isClicked) highlight(true, false);
+            });
+            cell.addEventListener('mouseout', () => {
+                if (!isClicked) highlight(false, false);
+            });
+        });
+    }
+
+    addGroupingTableInteractivity(isContinuous = false) {
+        const table = document.getElementById('grouping-table');
+        if (!table) return;
+    
+        const sumCells = table.querySelectorAll('.group-sum-cell');
+    
+        sumCells.forEach(cell => {
+            const indices = cell.dataset.indices.split(',').map(Number);
+    
+            const highlight = (doAdd) => {
+                indices.forEach(index => {
+                    const xCellId = isContinuous ? `group-class-${index}` : `group-x-${index}`;
+                    document.getElementById(xCellId)?.classList.toggle('bg-blue-200', doAdd);
+                    document.getElementById(`group-f-${index}`)?.classList.toggle('bg-blue-200', doAdd);
+                });
+            };
+    
+            const toggleClickHighlight = () => {
+                 indices.forEach(index => {
+                    const xCellId = isContinuous ? `group-class-${index}` : `group-x-${index}`;
+                    document.getElementById(xCellId)?.classList.toggle('bg-blue-300');
+                    document.getElementById(`group-f-${index}`)?.classList.toggle('bg-blue-300');
+                });
+            }
+    
+            cell.addEventListener('mouseover', () => highlight(true));
+            cell.addEventListener('mouseout', () => highlight(false));
+            cell.addEventListener('click', toggleClickHighlight);
+        });
+    }
+
+    populateGroupingTableUI(data, groupingColumns, isContinuous = false) {
+        const table = document.getElementById('grouping-table');
+        table.innerHTML = '';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr class="bg-gray-50">
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">${isContinuous ? 'Class' : 'x'}</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">f (I)</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">II</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">III</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">IV</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">V</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">VI</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        for (let i = 0; i < data.length; i++) {
+            const row = document.createElement('tr');
+            const identifier = isContinuous ? `${data[i].lower}-${data[i].upper}` : data[i].x;
+            const xCellId = isContinuous ? `group-class-${i}` : `group-x-${i}`;
+            row.innerHTML = `<td id="${xCellId}" class="px-4 py-2 border">${identifier}</td><td id="group-f-${i}" class="px-4 py-2 border">${data[i].f}</td>`;
+
+            for(let j=0; j<5; j++) { // For columns II to VI
+                const column = groupingColumns[j];
+                const group = column.find(g => g.indices[0] === i);
+                if (group) {
+                    row.innerHTML += `<td class="px-4 py-2 border group-sum-cell cursor-pointer" rowspan="${group.indices.length}" data-indices="${group.indices.join(',')}">${group.sum}</td>`;
+                } else {
+                    const isInGroup = column.some(g => g.indices.includes(i));
+                    if (!isInGroup) {
+                        row.innerHTML += `<td class="px-4 py-2 border"></td>`;
+                    }
+                }
+            }
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        
+        this.addGroupingTableInteractivity(isContinuous);
+        document.getElementById('grouping-method-container').classList.remove('hidden');
+    }
+
+    populateAnalysisTableUI(data, analysisTableRows, analysisCounts, isContinuous = false) {
+        const table = document.getElementById('analysis-table');
+        table.innerHTML = '';
+        table.classList.add('table-auto', 'w-auto', 'border-collapse');
+
+        const thead = document.createElement('thead');
+        let headerRow = '<tr class="bg-gray-50">';
+        headerRow += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border border-gray-300">Column</th>`;
+        data.forEach(item => {
+            const identifier = isContinuous ? `${item.lower}-${item.upper}` : item.x;
+            headerRow += `<th class="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border border-gray-300">${identifier}</th>`;
+        });
+        headerRow += '</tr>';
+        thead.innerHTML = headerRow;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        analysisTableRows.forEach((row, rowIndex) => {
+            const tr = document.createElement('tr');
+            let rowHtml = `<td class="px-4 py-2 font-semibold border border-gray-300">${['I', 'II', 'III', 'IV', 'V', 'VI'][rowIndex]}</td>`;
+            data.forEach(item => {
+                const identifier = isContinuous ? `${item.lower}-${item.upper}` : item.x;
+                const cellData = row[identifier];
+                rowHtml += `<td class="px-4 py-2 text-center border border-gray-300 ${cellData.ticked ? 'analysis-tick-cell cursor-pointer' : ''}"
+                                data-col-index="${rowIndex}"
+                                data-x-value="${identifier}">
+                                ${cellData.ticked ? '✓' : ''}
+                            </td>`;
+            });
+            tr.innerHTML = rowHtml;
+            tbody.appendChild(tr);
+        });
+
+        const totalRow = document.createElement('tr');
+        let totalRowHtml = `<td class="px-4 py-2 font-semibold border border-gray-300">Total</td>`;
+        data.forEach(item => {
+            const identifier = isContinuous ? `${item.lower}-${item.upper}` : item.x;
+            totalRowHtml += `<td class="px-4 py-2 font-semibold text-center border border-gray-300">${analysisCounts[identifier]}</td>`;
+        });
+        totalRow.innerHTML = totalRowHtml;
+        tbody.appendChild(totalRow);
+        
+        table.appendChild(tbody);
+        this.addAnalysisTableInteractivity(data, analysisTableRows, isContinuous);
+    }
+
     getAssumedMean() {
         const assumedMeanInput = document.getElementById('assumedMean');
         const a = parseFloat(assumedMeanInput.value);
@@ -320,36 +879,67 @@ class CentralTendencyCalculator {
         const mean = sumFx / sumF;
     
         this.displayResults({ Mean: mean.toFixed(4) });
-        this.populateConvertedCfTable(calculationSteps, sumF, sumFx);
+        this.populateConvertedCfTable(calculationSteps, sumF, sumFx, { showFx: true });
         this.displayMoreThanLessThanMeanSolution(sumF, sumFx, mean, this.moreThanLessThanType);
     }
 
-    populateConvertedCfTable(calculationSteps, sumF, sumFx) {
+    populateConvertedCfTable(calculationSteps, sumF, sumFx, options = { showFx: true }) {
         const tableContainer = document.getElementById('converted-cf-table-container');
         const tableBody = document.getElementById('converted-cf-table-body');
         const fTotalCell = document.getElementById('converted-cf-f-total');
         const fxTotalCell = document.getElementById('converted-cf-fx-total');
+        const midValueHeader = document.getElementById('converted-cf-mid-value-header');
+        const fxHeader = document.getElementById('converted-cf-fx-header');
+        const midValueTotal = document.getElementById('converted-cf-mid-value-total');
     
         tableBody.innerHTML = ''; // Clear previous data
+
+        if (options.showFx) {
+            midValueHeader.classList.remove('hidden');
+            fxHeader.classList.remove('hidden');
+            midValueTotal.classList.remove('hidden');
+            fxTotalCell.classList.remove('hidden');
+        } else {
+            midValueHeader.classList.add('hidden');
+            fxHeader.classList.add('hidden');
+            midValueTotal.classList.add('hidden');
+            fxTotalCell.classList.add('hidden');
+        }
     
+        let calculatedSumF = 0;
         calculationSteps.forEach(item => {
             const row = document.createElement('tr');
-            row.innerHTML = `
+            let rowHTML = `
                 <td class="px-4 py-2 whitespace-nowrap">${item.lower} - ${item.upper}</td>
                 <td class="px-4 py-2 whitespace-nowrap">${item.f}</td>
-                <td class="px-4 py-2 whitespace-nowrap">${item.midValue.toFixed(2)}</td>
-                <td class="px-4 py-2 whitespace-nowrap">${item.fx.toFixed(2)}</td>
             `;
+            calculatedSumF += item.f;
+            if (options.showFx) {
+                rowHTML += `
+                    <td class="px-4 py-2 whitespace-nowrap">${item.midValue.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">${item.fx.toFixed(2)}</td>
+                `;
+            }
+            row.innerHTML = rowHTML;
             tableBody.appendChild(row);
         });
     
-        fTotalCell.innerHTML = `$\\Sigma f = ${sumF}$`;
-        fxTotalCell.innerHTML = `$\\Sigma fx = ${sumFx.toFixed(2)}$`;
+        const finalSumF = sumF !== null ? sumF : calculatedSumF;
+        fTotalCell.innerHTML = `$\\Sigma f = ${finalSumF}$`;
+        if (options.showFx) {
+            fxTotalCell.innerHTML = `$\\Sigma fx = ${sumFx.toFixed(2)}$`;
+        } else {
+            fxTotalCell.innerHTML = '';
+        }
     
         tableContainer.classList.remove('hidden');
 
         if (typeof MathJax !== 'undefined') {
-            MathJax.typesetPromise([fTotalCell, fxTotalCell]);
+            const elementsToTypeset = [fTotalCell];
+            if (options.showFx) {
+                elementsToTypeset.push(fxTotalCell);
+            }
+            MathJax.typesetPromise(elementsToTypeset);
         }
     }
 
@@ -584,7 +1174,7 @@ class CentralTendencyCalculator {
         const mean = sumFx / sumF;
     
         this.displayResults({ Mean: mean.toFixed(4) });
-        this.populateConvertedCfTable(calculationSteps, sumF, sumFx);
+        this.populateConvertedCfTable(calculationSteps, sumF, sumFx, { showFx: true });
         this.displayMidValueMeanSolution(sumF, sumFx, mean);
     }
 
@@ -1107,6 +1697,60 @@ class CentralTendencyCalculator {
             <p>$$ \\bar{x} = ${A} + \\left( \\frac{${sumFu.toFixed(2)}}{${sumF}} \\times ${c} \\right) = ${mean.toFixed(4)} $$</p>
             <p><strong>The mean for the given data is ${mean.toFixed(4)}.</strong></p>
         `;
+
+        if (typeof MathJax !== 'undefined') {
+            MathJax.typesetPromise([solutionSteps]);
+        }
+    }
+
+    displayModeSolution(solutionText) {
+        const solutionContainer = document.getElementById('step-by-step-solution-container');
+        const solutionSteps = document.getElementById('solution-steps');
+        solutionContainer.classList.remove('hidden');
+
+        solutionSteps.innerHTML = `
+            <h3 class="font-semibold text-lg">Calculating the Mode</h3>
+            <p>${solutionText}</p>
+        `;
+
+        if (typeof MathJax !== 'undefined') {
+            MathJax.typesetPromise([solutionSteps]);
+        }
+    }
+
+    displayContinuousModeSolution(l, fm, f1, f2, c, mode, usedGrouping = false, reason = '') {
+        const solutionContainer = document.getElementById('step-by-step-solution-container');
+        const solutionSteps = document.getElementById('solution-steps');
+        solutionContainer.classList.remove('hidden');
+
+        const fm_description = usedGrouping ? 'Frequency of the modal class' : 'Frequency of the modal class (highest frequency)';
+
+        let solutionHTML = `
+            <h3 class="font-semibold text-lg">Calculating the Mode for Continuous Data</h3>
+        `;
+
+        if (usedGrouping) {
+            const reasonText = reason ? `because ${reason}` : 'due to a tie for the highest frequency';
+            solutionHTML += `<p>The modal class was determined using the grouping method ${reasonText}, as shown in the tables above. The identified modal class is <strong>${l} - ${l+c}</strong>.</p>`;
+        }
+
+        solutionHTML += `
+            <p><strong>Formula:</strong></p>
+            <p>$$ Mode = l + \\frac{f_m - f_1}{2f_m - f_1 - f_2} \\times c $$</p>
+            <p>Where:</p>
+            <ul>
+                <li>$l$ = Lower limit of the modal class = ${l}</li>
+                <li>$f_m$ = ${fm_description} = ${fm}</li>
+                <li>$f_1$ = Frequency of the class preceding the modal class = ${f1}</li>
+                <li>$f_2$ = Frequency of the class succeeding the modal class = ${f2}</li>
+                <li>$c$ = Class length of the modal class = ${c}</li>
+            </ul>
+            <p><strong>Calculation:</strong></p>
+            <p>$$ Mode = ${l} + \\frac{${fm} - ${f1}}{2 \\times ${fm} - ${f1} - ${f2}} \\times ${c} = ${mode.toFixed(4)} $$</p>
+            <p><strong>The mode for the given data is ${mode.toFixed(4)}.</strong></p>
+        `;
+
+        solutionSteps.innerHTML = solutionHTML;
 
         if (typeof MathJax !== 'undefined') {
             MathJax.typesetPromise([solutionSteps]);

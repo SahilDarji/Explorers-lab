@@ -1,0 +1,11 @@
+{
+  "rules": [
+    {
+      "pattern": "**/*",
+      "instructions": [
+        "Whenever adding a new page to the site, always update shared/js/common.js and the navigationData array.",
+        "Ensure new links are correctly configured for both local and GitHub Pages environments."
+      ]
+    }
+  ]
+}
