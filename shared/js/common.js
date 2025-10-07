@@ -2,16 +2,16 @@ console.log('🚀 Common.js loading...');
 
 // Navigation data - All hrefs are root-relative paths
 const navigationData = [
-    { id: 'navHome', text: 'Home Page', href: '/index.html', isHeader: false },
+    { id: 'navHome', text: 'Home Page', href: 'index.html', isHeader: false },
     { id: 'accountsHeader', text: 'Accounts', isHeader: true },
-    { id: 'navAccountsOverview', text: 'Accounts Overview', href: '/accounts/index.html', isHeader: false, parent: 'accountsHeader' },
-    { id: 'navJournal', text: 'Journal', href: '/accounts/journal/index.html', isHeader: false, parent: 'accountsHeader' },
+    { id: 'navAccountsOverview', text: 'Accounts Overview', href: 'accounts/index.html', isHeader: false, parent: 'accountsHeader' },
+    { id: 'navJournal', text: 'Journal', href: 'accounts/journal/index.html', isHeader: false, parent: 'accountsHeader' },
     { id: 'statisticsHeader', text: 'Statistics', isHeader: true },
-    { id: 'navCorrelation', text: 'Correlation + Regression', href: '/statistics/correl-regression/index.html', isHeader: false, parent: 'statisticsHeader' },
-    { id: 'navProbability', text: 'Probability', href: '/statistics/probability/index.html', isHeader: false, parent: 'statisticsHeader' },
-    { id: 'navCentralTendency', text: 'Measure of Central Tendency', href: '/statistics/central-tendency/index.html', isHeader: false, parent: 'statisticsHeader' },
-    { id: 'navFormulaSuggester', text: 'Formula Suggester', href: '/statistics/formula-suggester/index.html', isHeader: false, parent: 'statisticsHeader' },
-    { id: 'navTimeSeries', text: 'Time Series', href: '/statistics/time-series/index.html', isHeader: false, parent: 'statisticsHeader' },
+    { id: 'navCorrelation', text: 'Correlation + Regression', href: 'statistics/correl-regression/index.html', isHeader: false, parent: 'statisticsHeader' },
+    { id: 'navProbability', text: 'Probability', href: 'statistics/probability/index.html', isHeader: false, parent: 'statisticsHeader' },
+    { id: 'navCentralTendency', text: 'Measure of Central Tendency', href: 'statistics/central-tendency/index.html', isHeader: false, parent: 'statisticsHeader' },
+    { id: 'navFormulaSuggester', text: 'Formula Suggester', href: 'statistics/formula-suggester/index.html', isHeader: false, parent: 'statisticsHeader' },
+    { id: 'navTimeSeries', text: 'Time Series', href: 'statistics/time-series/index.html', isHeader: false, parent: 'statisticsHeader' },
 ];
 
 console.log('📊 Navigation data loaded:', navigationData.length, 'items');
