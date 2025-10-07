@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measure of Central Tendency - Learning Applet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #f0f4f8, #eef2ff, #f0f4f8);
+            background-attachment: fixed;
+        }
+        /* Custom input styling to match correl-regression page */
+        input[type="number"], input[type="text"] {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        input[type="number"]:focus, input[type="text"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+        /* Adaptive column width styling */
+        .adaptive-table th, .adaptive-table td {
+            min-width: 150px; /* Starting width for columns */
+            width: auto;
+        }
+        /* Styling for the quantile input forms */
+        .quantile-input-form input {
+            max-width: 200px; /* Shorten the input field */
+        }
+        .quantile-tab-btn.active {
+            border-bottom-width: 2px;
+        }
+    </style>
+    <link rel="stylesheet" href="/shared/css/styles.css">
+</head>
+<body class="min-h-screen relative">
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed top-0 left-0 h-full bg-white shadow-xl p-6 flex flex-col">
+        <div class="flex justify-end mb-8">
+            <button id="closeSidebarBtn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <nav class="space-y-4"></nav>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black bg-opacity-50"></div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-md relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center">
+                <button id="openSidebarBtn" class="text-gray-500 hover:text-gray-700 focus:outline-none mr-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h1 class="text-2xl font-semibold text-gray-900">Measure of Central Tendency</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Measure of Central Tendency Calculator</h2>
+            
+            <!-- Data Type Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Data Type</label>
+                <div id="dataTypeSelector" class="flex flex-wrap gap-x-4 gap-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="dataType" value="ungrouped" class="form-radio" checked>
+                        <span class="ml-2">Ungrouped Data</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="dataType" value="discrete" class="form-radio">
+                        <span class="ml-2">Discrete Data</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="dataType" value="continuous" class="form-radio">
+                        <span class="ml-2">Continuous Data</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="dataType" value="more-than-less-than" class="form-radio">
+                        <span class="ml-2">More Than/Less Than</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="dataType" value="mid-value" class="form-radio">
+                        <span class="ml-2">Mid-Value</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Data Entry Tables -->
+            <div id="data-entry-tables">
+                <!-- Ungrouped Data Table -->
+                <div id="ungrouped-data-table-container">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Enter Ungrouped Data</h3>
+                    <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                        <table id="ungrouped-table" class="divide-y divide-gray-200 adaptive-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Observations (x)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden deviation-header">d = x - A</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden step-deviation-header">u = d / c</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="ungrouped-data-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="ungrouped-data-table-foot" class="bg-gray-50 hidden">
+                                <tr class="font-semibold">
+                                    <td class="px-4 py-3">Total</td>
+                                    <td id="ungrouped-d-total" class="px-4 py-3 hidden d-total-cell"></td>
+                                    <td id="ungrouped-u-total" class="px-4 py-3 hidden u-total-cell"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Discrete Data Table -->
+                <div id="discrete-data-table-container" class="hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Enter Discrete Data</h3>
+                    <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                        <table id="discrete-table" class="divide-y divide-gray-200 adaptive-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Observations (x)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fx-header">fx</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden deviation-header">d = x - A</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden step-deviation-header">u = d / c</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fd-header">fd</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fu-header">fu</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="discrete-data-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="discrete-data-table-foot" class="bg-gray-50 hidden">
+                                <tr class="font-semibold">
+                                    <td class="px-4 py-3">Total</td>
+                                    <td id="discrete-f-total" class="px-4 py-3"></td>
+                                    <td id="discrete-fx-total" class="px-4 py-3 hidden fx-total-cell"></td>
+                                    <td class="px-4 py-3 hidden d-total-cell"></td> <!-- d total is not needed -->
+                                    <td class="px-4 py-3 hidden u-total-cell"></td> <!-- u total is not needed -->
+                                    <td id="discrete-fd-total" class="px-4 py-3 hidden fd-total-cell"></td>
+                                    <td id="discrete-fu-total" class="px-4 py-3 hidden fu-total-cell"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Continuous Data Table -->
+                <div id="continuous-data-table-container" class="hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Enter Continuous Data</h3>
+                    <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                        <table id="continuous-table" class="divide-y divide-gray-200 adaptive-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden mid-value-header">Mid-Value (x)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fx-header-cont">fx</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden deviation-header">d = x - A</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden step-deviation-header">u = d / c</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fd-header">fd</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider hidden fu-header">fu</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="continuous-data-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="text" placeholder="e.g., 10-20"></td>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                </tr>
+                            </tbody>
+                            <tfoot id="continuous-data-table-foot" class="bg-gray-50 hidden">
+                                <tr class="font-semibold">
+                                    <td class="px-4 py-3" colspan="1">Total</td>
+                                    <td id="continuous-f-total" class="px-4 py-3"></td>
+                                    <td class="px-4 py-3 hidden mid-value-total-cell"></td> <!-- Empty cell for mid-value column -->
+                                    <td id="continuous-fx-total" class="px-4 py-3 hidden fx-total-cell"></td>
+                                    <td class="px-4 py-3 hidden d-total-cell"></td> <!-- d total -->
+                                    <td class="px-4 py-3 hidden u-total-cell"></td> <!-- u total -->
+                                    <td id="continuous-fd-total" class="px-4 py-3 hidden fd-total-cell"></td>
+                                    <td id="continuous-fu-total" class="px-4 py-3 hidden fu-total-cell"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- More Than/Less Than Data Table -->
+                <div id="more-than-less-than-data-table-container" class="hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Enter Cumulative Frequency Data</h3>
+                    <div class="flex items-center mb-4">
+                        <span class="mr-3 text-sm font-medium text-gray-900">Series Type:</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="more-less-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            <span id="more-less-label" class="ml-3 text-sm font-medium text-gray-900">More Than</span>
+                        </label>
+                    </div>
+                    <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                        <table class="divide-y divide-gray-200 adaptive-table">
+                            <thead>
+                                <tr>
+                                    <th id="more-less-than-header" class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">More Than Value</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Cumulative Frequency (c.f.)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="more-than-less-than-data-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mid-Value Data Table -->
+                <div id="mid-value-data-table-container" class="hidden">
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Enter Mid-Value Data</h3>
+                    <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                        <table id="mid-value-table" class="divide-y divide-gray-200 adaptive-table">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Mid-Value (x)</th>
+                                    <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="mid-value-data-table">
+                                <tr>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                    <td class="px-4 py-2"><input type="number" step="any"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex flex-wrap gap-3 mt-4">
+                <button id="addRowBtn" class="btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Row
+                </button>
+            </div>
+        </div>
+
+        <!-- Converted Frequency Distribution Table -->
+        <div id="converted-cf-table-container" class="hidden bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Converted Frequency Distribution</h3>
+            <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                <table id="converted-cf-table" class="divide-y divide-gray-200 adaptive-table">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Class Interval</th>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Frequency (f)</th>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Mid-Value (x)</th>
+                            <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">fx</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="converted-cf-table-body">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                    <tfoot id="converted-cf-table-foot" class="bg-gray-50">
+                        <tr class="font-semibold">
+                            <td class="px-4 py-3">Total</td>
+                            <td id="converted-cf-f-total" class="px-4 py-3"></td>
+                            <td class="px-4 py-3"></td>
+                            <td id="converted-cf-fx-total" class="px-4 py-3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calculation Section -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Calculations</h2>
+            
+            <!-- Mean Calculation Method -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Mean Calculation Method</h3>
+                <div id="meanMethodSelector" class="flex flex-wrap gap-x-4 gap-y-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="meanMethod" value="direct" class="form-radio" checked>
+                        <span class="ml-2">Direct Method</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="meanMethod" value="shortcut" class="form-radio">
+                        <span class="ml-2">Shortcut Method</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="meanMethod" value="step-deviation" class="form-radio">
+                        <span class="ml-2">Step Deviation Method</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Assumed Mean and Class Interval Inputs -->
+            <div id="mean-assumptions" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div id="assumed-mean-container" class="hidden">
+                    <label for="assumedMean" class="block text-sm font-medium text-gray-700">Assumed Mean (A)</label>
+                    <input type="number" id="assumedMean" placeholder="Enter A" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div id="class-interval-container" class="hidden">
+                    <label for="classInterval" class="block text-sm font-medium text-gray-700">Class Interval (c)</label>
+                    <input type="number" id="classInterval" placeholder="Enter c" class="mt-1 block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+            </div>
+
+            <!-- Common Measures -->
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <button id="calculateMeanBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Mean</button>
+                <button id="calculateMedianBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Median</button>
+                <button id="calculateModeBtn" class="btn w-full text-left px-4 py-2 border rounded-lg text-gray-700 bg-gray-50 hover:bg-gray-100">Calculate Mode</button>
+            </div>
+
+            <!-- Quantile Calculation Area -->
+            <div class="mt-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-2">Quantiles (Quartiles, Deciles, Percentiles)</h3>
+                
+                <!-- Quantile Type Selector (Tab-like buttons) -->
+                <div class="flex space-x-2 border-b mb-4">
+                    <button id="selectQuartileBtn" class="quantile-tab-btn active py-2 px-4 border-b-2 border-blue-500 font-semibold text-blue-600">Quartile</button>
+                    <button id="selectDecileBtn" class="quantile-tab-btn py-2 px-4 text-gray-500 hover:text-gray-700">Decile</button>
+                    <button id="selectPercentileBtn" class="quantile-tab-btn py-2 px-4 text-gray-500 hover:text-gray-700">Percentile</button>
+                </div>
+
+                <!-- Quantile Input Forms -->
+                <div id="quantile-input-forms">
+                    <!-- Quartile Input Form -->
+                    <div id="quartile-input-container" class="quantile-input-form">
+                        <label for="quartileInput" class="block text-sm font-medium text-gray-700">Enter Quartile (1-3)</label>
+                        <div class="flex items-center mt-2 space-x-2">
+                            <input type="number" id="quartileInput" min="1" max="3" placeholder="e.g., 1" class="block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <button id="calculateQuartileBtn" class="btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Calculate</button>
+                        </div>
+                    </div>
+                    <!-- Decile Input Form -->
+                    <div id="decile-input-container" class="quantile-input-form hidden">
+                        <label for="decileInput" class="block text-sm font-medium text-gray-700">Enter Decile (1-9)</label>
+                        <div class="flex items-center mt-2 space-x-2">
+                            <input type="number" id="decileInput" min="1" max="9" placeholder="e.g., 7" class="block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <button id="calculateDecileBtn" class="btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Calculate</button>
+                        </div>
+                    </div>
+                    <!-- Percentile Input Form -->
+                    <div id="percentile-input-container" class="quantile-input-form hidden">
+                        <label for="percentileInput" class="block text-sm font-medium text-gray-700">Enter Percentile (1-99)</label>
+                        <div class="flex items-center mt-2 space-x-2">
+                            <input type="number" id="percentileInput" min="1" max="99" placeholder="e.g., 27" class="block w-full px-3 py-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <button id="calculatePercentileBtn" class="btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">Calculate</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Results</h2>
+            <div id="results-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Results will be dynamically inserted here -->
+                <p class="text-gray-500 col-span-full">Results will be displayed here after calculation.</p>
+            </div>
+        </div>
+
+        <!-- Step-by-step Solution Section -->
+        <div id="step-by-step-solution-container" class="bg-white rounded-xl shadow p-6 border border-gray-100 mt-8 hidden">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Step-by-step Solution</h2>
+            <div id="solution-steps" class="prose max-w-none">
+                <!-- Step-by-step solution will be dynamically inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12 shadow-inner relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <p class="text-center text-gray-500">Designed to help students understand statistics</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for common functionality (sidebar, navigation) -->
+    <script src="/shared/js/common.js"></script>
+    <script type="module" src="./central-tendency.js"></script>
+</body>
+</html>

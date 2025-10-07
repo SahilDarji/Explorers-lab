@@ -1,0 +1,226 @@
+{
+  "analysis_date": "2025-09-10",
+  "project_name": "Correlation Learning Applet - Dynamic Navigation System",
+  
+  "project_structure": {
+    "description": "Multi-page educational web application with hierarchical directory structure",
+    "root_directory": "Correlation-master/",
+    "pages": {
+      "home": {
+        "path": "home/index.html",
+        "depth_from_root": 1,
+        "expected_common_js_path": "../shared/js/common.js"
+      },
+      "accounts_overview": {
+        "path": "accounts/index.html", 
+        "depth_from_root": 1,
+        "expected_common_js_path": "../shared/js/common.js"
+      },
+      "accounts_journal": {
+        "path": "accounts/journal/index.html",
+        "depth_from_root": 2, 
+        "expected_common_js_path": "../../shared/js/common.js"
+      },
+      "statistics_correl_regression": {
+        "path": "statistics/correl-regression/index.html",
+        "depth_from_root": 2,
+        "expected_common_js_path": "../../shared/js/common.js"
+      },
+      "statistics_probability": {
+        "path": "statistics/probability/index.html",
+        "depth_from_root": 2,
+        "expected_common_js_path": "../../shared/js/common.js"
+      },
+      "statistics_formula_suggester": {
+        "path": "statistics/formula-suggester/index.html",
+        "depth_from_root": 2,
+        "expected_common_js_path": "../../shared/js/common.js"
+      },
+      "statistics_time_series": {
+        "path": "statistics/time-series/index.html",
+        "depth_from_root": 2,
+        "expected_common_js_path": "../../shared/js/common.js"
+      }
+    },
+    "shared_resources": {
+      "navigation_script": "shared/js/common.js",
+      "utility_script": "shared/js/utils.js", 
+      "shared_styles": "shared/css/styles.css"
+    }
+  },
+
+  "navigation_system_design": {
+    "approach": "Dynamic sidebar navigation generated from centralized data",
+    "key_components": {
+      "navigation_data": {
+        "location": "shared/js/common.js",
+        "structure": "Array of objects with id, text, href, isHeader, parent properties",
+        "href_format": "Root-relative paths (e.g., 'home/index.html', 'accounts/journal/index.html')"
+      },
+      "path_calculation": {
+        "method": "Calculate relative path from current page depth to target page",
+        "algorithm": "Count directory levels from root, prepend '../' for each level"
+      },
+      "active_page_highlighting": {
+        "method": "Compare current page path with navigation data hrefs",
+        "implementation": "Add/remove CSS classes for visual indication"
+      }
+    }
+  },
+
+  "implementation_details": {
+    "html_structure": {
+      "required_elements": [
+        "<div id='sidebar'>",
+        "<nav class='space-y-4'></nav>", 
+        "<button id='openSidebarBtn'>",
+        "<button id='closeSidebarBtn'>",
+        "<div id='overlay'>"
+      ],
+      "css_classes": {
+        "sidebar": "Fixed positioning, transform for slide animation",
+        "overlay": "Full-screen backdrop with opacity transition"
+      }
+    },
+    "javascript_functions": {
+      "getBasePath()": {
+        "purpose": "Calculate relative path prefix based on current page location",
+        "logic": "Find 'Correlation-master' in URL path, count levels after it"
+      },
+      "getCurrentPagePath()": {
+        "purpose": "Extract current page path for active link highlighting", 
+        "logic": "Parse URL to get path relative to project root"
+      },
+      "renderSidebar()": {
+        "purpose": "Generate HTML for navigation links",
+        "logic": "Loop through navigationData, create DOM elements with correct relative paths"
+      },
+      "setupSidebar()": {
+        "purpose": "Initialize event listeners and render navigation",
+        "logic": "Attach click handlers, call renderSidebar()"
+      }
+    }
+  },
+
+  "identified_problems": {
+    "primary_issue": {
+      "symptom": "Sidebar appears but contains no navigation links",
+      "user_report": "Sidebar opens but is blank on all pages",
+      "console_logs_missing": "Expected console logs from common.js not appearing"
+    },
+    
+    "potential_causes": [
+      {
+        "category": "JavaScript Loading Issues",
+        "problems": [
+          {
+            "issue": "Script not loading",
+            "evidence": "No console logs from common.js appearing",
+            "test": "Created simple-test.html and test.html to verify JS execution"
+          },
+          {
+            "issue": "Path resolution problems", 
+            "evidence": "Different relative paths across directory structure",
+            "details": "home/ uses '../shared/js/common.js', accounts/journal/ uses '../../../shared/js/common.js'"
+          },
+          {
+            "issue": "Module loading conflicts",
+            "evidence": "Some scripts have type='module', others don't",
+            "status": "Previously addressed by removing type='module' from common.js"
+          }
+        ]
+      },
+      {
+        "category": "DOM Element Issues",
+        "problems": [
+          {
+            "issue": "Missing required DOM elements",
+            "evidence": "Functions expect specific IDs like 'sidebar', 'openSidebarBtn'",
+            "verification": "All HTML files have required elements"
+          },
+          {
+            "issue": "CSS not loading properly",
+            "evidence": "Sidebar styles might not be applied",
+            "status": "Styles exist in both inline CSS and shared/css/styles.css"
+          }
+        ]
+      },
+      {
+        "category": "Path Calculation Logic",
+        "problems": [
+          {
+            "issue": "getBasePath() function complexity",
+            "evidence": "Complex logic to find 'Correlation-master' in URL path",
+            "risk": "May fail with different server configurations or URL structures"
+          },
+          {
+            "issue": "URL parsing assumptions", 
+            "evidence": "Code assumes specific URL format with 'Correlation-master'",
+            "risk": "Brittle if served from different path or domain"
+          }
+        ]
+      },
+      {
+        "category": "Server Configuration",
+        "problems": [
+          {
+            "issue": "HTTP server root mismatch",
+            "evidence": "Server started from Correlation-master/ directory",
+            "impact": "URLs might not match expected path structure"
+          },
+          {
+            "issue": "CORS or file serving issues",
+            "evidence": "Local development server may have restrictions",
+            "test": "Simple test files created to verify basic functionality"
+          }
+        ]
+      }
+    ]
+  },
+
+  "debugging_strategy": {
+    "step_1": {
+      "action": "Test basic JavaScript execution",
+      "files": ["simple-test.html", "test.html"],
+      "expected_result": "Console logs appear, basic DOM manipulation works",
+      "purpose": "Isolate whether issue is with JS loading or navigation logic"
+    },
+    "step_2": {
+      "action": "Verify common.js loading",
+      "method": "Check browser network tab for 404 errors on common.js",
+      "purpose": "Confirm script file is accessible from all page locations"
+    },
+    "step_3": {
+      "action": "Simplify path calculation",
+      "method": "Replace complex getBasePath() with simpler relative path logic",
+      "purpose": "Eliminate potential bugs in path resolution"
+    },
+    "step_4": {
+      "action": "Add extensive logging",
+      "method": "Console.log at every step of navigation rendering",
+      "purpose": "Pinpoint exactly where the process fails"
+    }
+  },
+
+  "current_status": {
+    "server_running": "Yes - python -m http.server 8000 from Correlation-master/",
+    "files_verified": "All HTML files have correct script tags and DOM structure",
+    "css_verified": "Sidebar styles present in both inline and external CSS",
+    "test_files_created": "simple-test.html and test.html for debugging",
+    "next_action_needed": "User to test simple-test.html and report results"
+  },
+
+  "success_criteria": {
+    "sidebar_functionality": "Sidebar opens/closes on button click",
+    "navigation_links": "All pages show in sidebar with correct hierarchy",
+    "active_highlighting": "Current page highlighted in navigation",
+    "cross_page_consistency": "Same navigation experience on all pages",
+    "path_resolution": "All navigation links work correctly from any page"
+  },
+
+  "rollback_plan": {
+    "if_dynamic_navigation_fails": "Revert to hardcoded navigation in each HTML file",
+    "backup_approach": "Use simple relative links without complex path calculation",
+    "minimal_viable_solution": "Basic navigation menu with manual path management"
+  }
+}

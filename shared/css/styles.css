@@ -1,0 +1,32 @@
+/* Sidebar styles */
+.sidebar {
+    width: 250px;
+    transform: translateX(-250px);
+    transition: transform 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.sidebar.open {
+    transform: translateX(0);
+}
+
+.overlay {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 999;
+}
+
+.overlay.open {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Button effects */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
