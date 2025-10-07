@@ -204,6 +204,12 @@
     
     <!-- JavaScript for formula suggestion -->
     <script type="module" src="./formula-suggester.js"></script>
+    <script type="module">
+        import { FormulaSuggester } from './formula-suggester.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            new FormulaSuggester();
+        });
+    </script>
     <!-- JavaScript for common functionality (sidebar, navigation) -->
     <script src="/shared/js/common.js"></script>
 </body>

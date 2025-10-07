@@ -2,7 +2,7 @@ console.log('🚀 Common.js loading...');
 
 // Navigation data - All hrefs are root-relative paths
 const navigationData = [
-    { id: 'navHome', text: 'Home Page', href: '/home/index.html', isHeader: false },
+    { id: 'navHome', text: 'Home Page', href: '/index.html', isHeader: false },
     { id: 'accountsHeader', text: 'Accounts', isHeader: true },
     { id: 'navAccountsOverview', text: 'Accounts Overview', href: '/accounts/index.html', isHeader: false, parent: 'accountsHeader' },
     { id: 'navJournal', text: 'Journal', href: '/accounts/journal/index.html', isHeader: false, parent: 'accountsHeader' },

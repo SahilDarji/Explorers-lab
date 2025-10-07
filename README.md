@@ -222,9 +222,9 @@ const navigationData = [
 
 ### Navigation Data Structure:
 
-- **Top-level page**: `{ id: 'navHome', text: 'Home Page', href: 'home/index.html', isHeader: false }`
-- **Section header**: `{ id: 'statisticsHeader', text: 'Statistics', isHeader: true }`
-- **Sub-page**: `{ id: 'navTool', text: 'Tool Name', href: 'statistics/tool/index.html', isHeader: false, parent: 'statisticsHeader' }`
+- **Top-level page**: `{ id: 'navHome', text: 'Home Page', href: 'index.html', isHeader: false }`
+- **Section header**: `{ id: 'accountsHeader', text: 'Accounts', isHeader: true }`
+- **Sub-page**: `{ id: 'navAccountsOverview', text: 'Accounts Overview', href: '/accounts/index.html', isHeader: false, parent: 'accountsHeader' }`
 
 ### Key Features:
 

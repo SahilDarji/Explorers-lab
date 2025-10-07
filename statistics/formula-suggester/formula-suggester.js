@@ -139,19 +139,15 @@ export class FormulaSuggester {
     }
 
     updateSuggestedFormulas() {
-        const { providedInputIds, anyInputTouched } = this.getProvidedInputDetails();
+        const { providedInputIds, anyInputTouched, providedValues } = this.getProvidedInputDetails();
         
-        let formulasToConsider;
-        if (!anyInputTouched || providedInputIds.size === 0) {
-            // INITIAL STATE or inputs touched but no valid numbers yet: show all formulas.
-            formulasToConsider = [...this.formulas];
-        } else {
-            // Valid numeric inputs exist. Filter: a formula is a candidate if AT LEAST ONE of its required inputs is among the providedInputIds.
-            formulasToConsider = this.formulas.filter(formula => {
-                return formula.requiredInputs.some(reqId => providedInputIds.has(reqId));
-            });
-        }
-        this.displayFormulas(formulasToConsider, anyInputTouched, providedInputIds);
+        // Filter formulas to find which ones are fully calculable
+        const calculableFormulas = this.formulas.filter(formula =>
+            formula.requiredInputs.every(reqId => providedInputIds.has(reqId))
+        );
+
+        // Always display all formulas, but their state (clickable/disabled) will change.
+        this.displayFormulas(this.formulas, anyInputTouched, providedInputIds);
     }
 
     mjxWrapper(latex) {

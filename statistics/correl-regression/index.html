@@ -252,6 +252,12 @@
 
     <!-- JavaScript for auto-row addition -->
     <script type="module" src="./correlation.js"></script>
+    <script type="module">
+        import { CorrelationCalculator } from './correlation.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            new CorrelationCalculator();
+        });
+    </script>
     <!-- JavaScript for common functionality (sidebar, navigation) -->
     <script src="/shared/js/common.js"></script>
 </body>

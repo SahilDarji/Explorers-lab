@@ -7,7 +7,7 @@
     "root_directory": "Correlation-master/",
     "pages": {
       "home": {
-        "path": "home/index.html",
+        "path": "index.html",
         "depth_from_root": 1,
         "expected_common_js_path": "../shared/js/common.js"
       },
@@ -55,7 +55,7 @@
       "navigation_data": {
         "location": "shared/js/common.js",
         "structure": "Array of objects with id, text, href, isHeader, parent properties",
-        "href_format": "Root-relative paths (e.g., 'home/index.html', 'accounts/journal/index.html')"
+        "href_format": "Root-relative paths (e.g., 'index.html', 'accounts/journal/index.html')"
       },
       "path_calculation": {
         "method": "Calculate relative path from current page depth to target page",
@@ -222,5 +222,11 @@
     "if_dynamic_navigation_fails": "Revert to hardcoded navigation in each HTML file",
     "backup_approach": "Use simple relative links without complex path calculation",
     "minimal_viable_solution": "Basic navigation menu with manual path management"
+  },
+
+  "analysis_summary": {
+    "total_pages": 10,
+    "max_depth": 3,
+    "href_format": "Root-relative paths (e.g., 'index.html', 'accounts/journal/index.html')"
   }
 }
