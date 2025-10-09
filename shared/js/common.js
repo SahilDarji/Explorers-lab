@@ -10,7 +10,6 @@ const navigationData = [
     { id: 'navCorrelation', text: 'Correlation + Regression', href: 'statistics/correl-regression/index.html', isHeader: false, parent: 'statisticsHeader' },
     { id: 'navProbability', text: 'Probability', href: 'statistics/probability/index.html', isHeader: false, parent: 'statisticsHeader' },
     { id: 'navCentralTendency', text: 'Measure of Central Tendency', href: 'statistics/central-tendency/index.html', isHeader: false, parent: 'statisticsHeader' },
-    { id: 'navFormulaSuggester', text: 'Formula Suggester', href: 'statistics/formula-suggester/index.html', isHeader: false, parent: 'statisticsHeader' },
     { id: 'navTimeSeries', text: 'Time Series', href: 'statistics/time-series/index.html', isHeader: false, parent: 'statisticsHeader' },
 ];
 
@@ -98,6 +97,15 @@ function renderSidebar() {
     });
 }
 
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    if (sidebar && overlay) {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
+    }
+}
+
 // Setup sidebar toggle functionality
 function setupSidebar() {
     const openSidebarBtn = document.getElementById('openSidebarBtn');
@@ -125,9 +133,19 @@ function setupSidebar() {
             overlay.classList.remove('open');
         });
     }
+
+    // Add click listener to nav links to close sidebar on navigation
+    const navLinks = document.querySelectorAll('#sidebar nav a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            closeSidebar();
+        });
+    });
     
     // Render the navigation
     renderSidebar();
+    // Ensure sidebar is closed on page load
+    closeSidebar();
 }
 
 // Initialize when DOM is loaded

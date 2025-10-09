@@ -3,14 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Series - Statistics</title>
+    <title>Time Series Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          displayMath: [['$$', '$$'], ['\\[', '\\]']],
+          processEscapes: true
+        },
+        options: {
+          skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+          ignoreHtmlClass: 'tex2jax_ignore',
+          processHtmlClass: 'tex2jax_process'
+        },
+        startup: {
+          ready: () => {
+            console.log('MathJax is ready to go!');
+            MathJax.startup.defaultReady();
+          }
+        }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(to bottom right, #f0f4f8, #eef2ff, #f0f4f8);
             background-attachment: fixed;
+        }
+        input[type="number"] {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s;
+            width: 100%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        input[type="number"]:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
         }
         .sidebar {
             width: 250px;
@@ -32,7 +78,7 @@
             opacity: 1;
         }
     </style>
-    <link rel="stylesheet" href="../../shared/css/styles.css"> <!-- Link to shared styles.css -->
+    <link rel="stylesheet" href="../../shared/css/styles.css">
 </head>
 <body class="min-h-screen relative">
     <!-- Sidebar -->
@@ -62,27 +108,117 @@
                 <h1 class="text-2xl font-semibold text-gray-900">Time Series Analysis</h1>
             </div>
             <div>
-                <!-- Optional: Add any other header links or content here -->
+                <a href="../moving-average/index.html" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                    Go to Moving Average Tool
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                </a>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-xl shadow p-6 border border-gray-100 text-center">
-            <h2 class="text-2xl font-bold text-gray-900 mb-4">Welcome to the Time Series Analysis Page!</h2>
-            <p class="text-gray-700 text-lg">This page is for time series analysis tools and information.</p>
-            <p class="text-gray-600 mt-2">Content will be added here later.</p>
+    <!-- Main Content for Time Series -->
+    <main id="timeSeriesContent" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Data Entry -->
+            <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Enter Your Data (Y values)</h2>
+                
+                <!-- Data Table -->
+                <div class="overflow-x-auto mb-4 border border-gray-200 rounded-lg shadow-sm">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Y Values</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="dataTable">
+                            <tr>
+                                <td class="px-4 py-2">
+                                    <input type="number" step="any">
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <td class="px-4 py-2 text-sm text-gray-500 italic">Add more rows as needed</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <button id="addRowBtn" class="btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Add Row
+                    </button>
+
+                    <button id="solveBtn" class="btn inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        Calculate Trend
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Results and Visualization -->
+            <div class="space-y-6">
+                <!-- Scatter Plot -->
+                <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Time Series Plot</h2>
+                    <div class="chart-container">
+                        <canvas id="timeSeriesPlot"></canvas>
+                    </div>
+                </div>
+
+                <!-- Results Panel -->
+                <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Results</h2>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100">
+                            <h3 class="text-lg font-medium text-gray-800">Trend Line Equation (ŷ = a + bt)</h3>
+                            <p class="text-3xl font-bold text-blue-600 mt-2">--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Solution -->
+                <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">Step-by-Step Solution</h2>
+                    <div class="prose max-w-none bg-blue-50 p-5 rounded-lg border border-blue-100">
+                        <div class="flex flex-col items-center justify-center py-6 text-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <p class="text-blue-700 font-medium text-lg">Ready to calculate!</p>
+                            <p class="text-gray-600 mt-2">Enter data and click Calculate Trend to see detailed steps</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 mt-12 shadow-inner relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <p class="text-center text-gray-500">Designed to help students understand correlation in statistics</p>
+            <p class="text-center text-gray-500">Designed to help students understand time series analysis in statistics</p>
         </div>
     </footer>
 
+    <!-- JavaScript for page logic -->
+    <script type="module" src="./time-series.js"></script>
+    <script type="module">
+        import { TimeSeriesCalculator } from './time-series.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            new TimeSeriesCalculator();
+        });
+    </script>
     <!-- JavaScript for common functionality (sidebar, navigation) -->
     <script src="../../shared/js/common.js"></script>
 </body>

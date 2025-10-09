@@ -19,24 +19,6 @@
     display: block;
 }
 
-@media (min-width: 1024px) {
-    .sidebar {
-        transform: translateX(0);
-    }
-    #openSidebarBtn {
-        display: none;
-    }
-    #closeSidebarBtn {
-        display: none;
-    }
-    .overlay {
-        display: none !important; /* Ensure overlay is never shown on desktop */
-    }
-    main {
-        margin-left: 280px;
-    }
-}
-
 /* Button effects */
 .btn {
     transition: all 0.3s ease;
